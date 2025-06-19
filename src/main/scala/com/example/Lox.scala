@@ -44,18 +44,34 @@ object Lox {
     }
   }
 
-  private def run(source: String): Unit = {
+  def run(source: String): Unit =
     val scanner = new Scanner(source)
-    val tokens: List[Token] = scanner.scanTokens()
-    //for now, just print the tokens.
-    tokens.foreach(println)
-    
-  }
+    val tokens = scanner.scanTokens()
+
+    val parser = new Parser(tokens)
+    val expressionOpt = parser.parse()
+
+    // Para simular o 'hadError', vamos supor que você tenha um objeto Lox com essa flag
+    if Lox.hadError then return
+
+    expressionOpt match
+      case Some(expression) =>
+        println(AstPrinter.print(expression))
+      case None =>
+        // Parser retornou erro (None), não faz nada ou exibe erro
+        ()
 
   def error(line: Int, message: String): Unit = {
     report(line, "", message)
   }
 
+  def error(token: Token, message: String): Unit =
+    val location = token match
+      case t if t.tokenType == TokenType.EOF => " at end"
+      case t => s" at '${t.lexeme}'"
+
+    report(token.line, location, message)
+    
   private def report(line: Int, where: String, message: String): Unit = {
     Console.err.println(s"[line $line] Error$where: $message")
     hadError = true
