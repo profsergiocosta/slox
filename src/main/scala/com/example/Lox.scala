@@ -10,6 +10,14 @@ import scala.jdk.CollectionConverters._
 
 object Lox {
 
+  def printExpr(expr: Expr): String = expr match
+    case Expr.Literal(Some(value)) => value.toString
+    case Expr.Literal(None)        => "nil"
+    case Expr.Grouping(e)          => s"(group ${printExpr(e)})"
+    case Expr.Unary(op, right)     => s"(${op.toString()} ${printExpr(right)})"
+    case Expr.Binary(left, op, right) =>
+      s"(${op.toString()} ${printExpr(left)} ${printExpr(right)})"
+
   var hadError: Boolean = false
 
   def main(args: Array[String]): Unit = {
@@ -56,7 +64,8 @@ object Lox {
 
     expressionOpt match
       case Some(expression) =>
-        println(AstPrinter.print(expression))
+        //println(AstPrinter.print(expression))
+        println(printExpr(expression))
       case None =>
         // Parser retornou erro (None), não faz nada ou exibe erro
         ()
