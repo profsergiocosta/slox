@@ -4,6 +4,8 @@ package com.example
 
 import scala.collection.mutable.ListBuffer
 
+
+
 class Scanner(source: String):
 
   private val tokens = ListBuffer.empty[Token]
@@ -64,26 +66,25 @@ class Scanner(source: String):
       case ' ' | '\r' | '\t' => ()
       case '\n' => line += 1
       case '"'  => string()
-      case ch if isDigit(ch) => number()
-      case ch if isAlpha(ch) => identifier()
+      case ch if ch.isDigit => number()
+      case ch if ch.isLetter || ch == '_' => identifier()
       case _ => Lox.error(line, "Unexpected character.")
 
   private def identifier(): Unit =
-    while isAlphaNumeric(peek) do advance()
+    while peek.isLetterOrDigit || peek == '_' do advance()
     val text = source.substring(start, current)
     val tokenType = keywords.getOrElse(text, TokenType.IDENTIFIER)
     tokenType match
       case TokenType.IDENTIFIER => tokens += IdentifierToken(text, line)
-      case kw                   => tokens += KeywordToken(kw, text, line)
+      case kw                   => tokens += KeywordToken(kw, line)
 
   private def number(): Unit =
-    while isDigit(peek) do advance()
-    if peek == '.' && isDigit(peekNext()) then
+    while peek.isDigit do advance()
+    if peek == '.' && peekNext().isDigit then
       advance()
-      while isDigit(peek) do advance()
-    val text = source.substring(start, current)
-    val value = text.toDouble
-    tokens += NumberToken(text, value, line)
+      while peek.isDigit do advance()
+    val value = source.substring(start, current).toDouble
+    tokens += NumberToken(value, line)
 
   private def string(): Unit =
     while peek != '"' && !isAtEnd do
@@ -92,9 +93,9 @@ class Scanner(source: String):
     if isAtEnd then
       Lox.error(line, "Unterminated string.")
     else
-      advance() // the closing "
+      advance() // consume closing quote
       val value = source.substring(start + 1, current - 1)
-      tokens += StringToken(source.substring(start, current), value, line)
+      tokens += StringToken(value, line)
 
   private def matchChar(expected: Char): Boolean =
     if isAtEnd || source.charAt(current) != expected then false
@@ -114,12 +115,4 @@ class Scanner(source: String):
     ch
 
   private def addToken(tokenType: TokenType): Unit =
-    val text = source.substring(start, current)
-    tokens += SymbolToken(tokenType, text, line)
-
-  private def isDigit(c: Char): Boolean = c >= '0' && c <= '9'
-
-  private def isAlpha(c: Char): Boolean =
-    (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_'
-
-  private def isAlphaNumeric(c: Char): Boolean = isAlpha(c) || isDigit(c)
+    tokens += SymbolToken(tokenType, line)

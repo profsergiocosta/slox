@@ -68,10 +68,10 @@ object Lox {
   def error(token: Token, message: String): Unit =
     val location = token match
       case t if t.tokenType == TokenType.EOF => " at end"
-      case t => s" at '${t.lexeme}'"
+      case t => s" at '${t}'"
 
     report(token.line, location, message)
-    
+
   private def report(line: Int, where: String, message: String): Unit = {
     Console.err.println(s"[line $line] Error$where: $message")
     hadError = true

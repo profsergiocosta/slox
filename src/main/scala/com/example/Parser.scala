@@ -55,36 +55,35 @@ class Parser(tokens: List[Token]):
     else primary()
 
   private def primary(): Expr =
-    peek() match
-        case KeywordToken(TokenType.FALSE, _, _) =>
-            advance()
-            Expr.Literal(Some(false))
+        peek() match
+            case KeywordToken(TokenType.FALSE, _) =>
+                advance()
+                Expr.Literal(Some(false))
 
-        case KeywordToken(TokenType.TRUE, _, _) =>
-            advance()
-            Expr.Literal(Some(true))
+            case KeywordToken(TokenType.TRUE, _) =>
+                advance()
+                Expr.Literal(Some(true))
 
-        case KeywordToken(TokenType.NIL, _, _) =>
-            advance()
-            Expr.Literal(None)
+            case KeywordToken(TokenType.NIL, _) =>
+                advance()
+                Expr.Literal(None)
 
-        case NumberToken(_, value: Double, _) =>
-            advance()
-            Expr.Literal(Some(value))
+            case NumberToken(value, _) =>
+                advance()
+                Expr.Literal(Some(value))
 
-        case StringToken(_, value: String, _) =>
-            advance()
-            Expr.Literal(Some(value))
+            case StringToken(value, _) =>
+                advance()
+                Expr.Literal(Some(value))
 
-        case SymbolToken(TokenType.LEFT_PAREN, _, _) =>
-            advance()
-            val expr = expression()
-            consume(TokenType.RIGHT_PAREN, "Expect ')' after expression.")
-            Expr.Grouping(expr)
+            case SymbolToken(TokenType.LEFT_PAREN, _) =>
+                advance()
+                val expr = expression()
+                consume(TokenType.RIGHT_PAREN, "Expect ')' after expression.")
+                Expr.Grouping(expr)
 
-        case _ =>
-            throw error(peek(), "Expect expression.")
-
+            case _ =>
+                throw error(peek(), "Expect expression.")
 
   private def matchToken(types: TokenType*): Boolean =
     types.exists(t => check(t)) && {

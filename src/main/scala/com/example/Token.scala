@@ -24,27 +24,25 @@ enum TokenType:
 
 sealed trait Token:
   def tokenType: TokenType
-  def lexeme: String
   def line: Int
-
-case class IdentifierToken(lexeme: String, line: Int) extends Token:
+case class IdentifierToken(name: String, line: Int) extends Token:
   val tokenType = TokenType.IDENTIFIER
+  override def toString: String = s"$tokenType $name"
 
-case class StringToken(lexeme: String, value: String, line: Int) extends Token:
+case class StringToken(value: String, line: Int) extends Token:
   val tokenType = TokenType.STRING
-  override def toString: String = s"$tokenType $lexeme \"$value\""
+  override def toString: String = s"$tokenType \"$value\""
 
-case class NumberToken(lexeme: String, value: Double, line: Int) extends Token:
+case class NumberToken(value: Double, line: Int) extends Token:
   val tokenType = TokenType.NUMBER
-  override def toString: String = s"$tokenType $lexeme $value"
+  override def toString: String = s"$tokenType $value"
 
-case class SymbolToken(tokenType: TokenType, lexeme: String, line: Int) extends Token:
-  override def toString: String = s"$tokenType $lexeme"
+case class SymbolToken(tokenType: TokenType, line: Int) extends Token:
+  override def toString: String = s"$tokenType"
 
-case class KeywordToken(tokenType: TokenType, lexeme: String, line: Int) extends Token:
-  override def toString: String = s"$tokenType $lexeme"
+case class KeywordToken(tokenType: TokenType, line: Int) extends Token:
+  override def toString: String = s"$tokenType"
 
 case class EofToken(line: Int) extends Token:
   val tokenType = TokenType.EOF
-  val lexeme = ""
   override def toString: String = s"$tokenType"
