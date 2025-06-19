@@ -45,11 +45,11 @@ object Lox {
   }
 
   private def run(source: String): Unit = {
-    //val scanner = new Scanner(source)
-    //val tokens: List[Token] = scanner.scanTokens()
-    // For now, just print the tokens.
-    //tokens.foreach(println)
-    println("ok")
+    val scanner = new Scanner(source)
+    val tokens: List[Token] = scanner.scanTokens()
+    //for now, just print the tokens.
+    tokens.foreach(println)
+    
   }
 
   def error(line: Int, message: String): Unit = {
