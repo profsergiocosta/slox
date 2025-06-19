@@ -44,31 +44,45 @@ class Scanner(source: String):
   private def scanToken(): Unit =
     val c = advance()
     c match
-      case '(' => addToken(TokenType.LEFT_PAREN)
-      case ')' => addToken(TokenType.RIGHT_PAREN)
-      case '{' => addToken(TokenType.LEFT_BRACE)
-      case '}' => addToken(TokenType.RIGHT_BRACE)
-      case ',' => addToken(TokenType.COMMA)
-      case '.' => addToken(TokenType.DOT)
-      case '-' => addToken(TokenType.MINUS)
-      case '+' => addToken(TokenType.PLUS)
-      case ';' => addToken(TokenType.SEMICOLON)
-      case '*' => addToken(TokenType.STAR)
-      case '!' => addToken(if matchChar('=') then TokenType.BANG_EQUAL else TokenType.BANG)
-      case '=' => addToken(if matchChar('=') then TokenType.EQUAL_EQUAL else TokenType.EQUAL)
-      case '<' => addToken(if matchChar('=') then TokenType.LESS_EQUAL else TokenType.LESS)
-      case '>' => addToken(if matchChar('=') then TokenType.GREATER_EQUAL else TokenType.GREATER)
-      case '/' =>
-        if matchChar('/') then
-          while peek != '\n' && !isAtEnd do advance()
-        else
-          addToken(TokenType.SLASH)
-      case ' ' | '\r' | '\t' => ()
-      case '\n' => line += 1
-      case '"'  => string()
-      case ch if ch.isDigit => number()
-      case ch if ch.isLetter || ch == '_' => identifier()
-      case _ => Lox.error(line, "Unexpected character.")
+        case '(' => tokens += SymbolToken(TokenType.LEFT_PAREN, line)
+        case ')' => tokens += SymbolToken(TokenType.RIGHT_PAREN, line)
+        case '{' => tokens += SymbolToken(TokenType.LEFT_BRACE, line)
+        case '}' => tokens += SymbolToken(TokenType.RIGHT_BRACE, line)
+        case ',' => tokens += SymbolToken(TokenType.COMMA, line)
+        case '.' => tokens += SymbolToken(TokenType.DOT, line)
+        case '-' => tokens += SymbolToken(TokenType.MINUS, line)
+        case '+' => tokens += SymbolToken(TokenType.PLUS, line)
+        case ';' => tokens += SymbolToken(TokenType.SEMICOLON, line)
+        case '*' => tokens += SymbolToken(TokenType.STAR, line)
+
+        case '!' =>
+            val tpe = if matchChar('=') then TokenType.BANG_EQUAL else TokenType.BANG
+            tokens += SymbolToken(tpe, line)
+
+        case '=' =>
+            val tpe = if matchChar('=') then TokenType.EQUAL_EQUAL else TokenType.EQUAL
+            tokens += SymbolToken(tpe, line)
+
+        case '<' =>
+            val tpe = if matchChar('=') then TokenType.LESS_EQUAL else TokenType.LESS
+            tokens += SymbolToken(tpe, line)
+
+        case '>' =>
+            val tpe = if matchChar('=') then TokenType.GREATER_EQUAL else TokenType.GREATER
+            tokens += SymbolToken(tpe, line)
+
+        case '/' =>
+            if matchChar('/') then
+                while peek != '\n' && !isAtEnd do advance()
+            else
+                tokens += SymbolToken(TokenType.SLASH, line)
+
+        case ' ' | '\r' | '\t' => ()
+        case '\n' => line += 1
+        case '"'  => string()
+        case ch if ch.isDigit => number()
+        case ch if ch.isLetter || ch == '_' => identifier()
+        case _ => Lox.error(line, "Unexpected character.")
 
   private def identifier(): Unit =
     while peek.isLetterOrDigit || peek == '_' do advance()
@@ -113,6 +127,3 @@ class Scanner(source: String):
     val ch = source.charAt(current)
     current += 1
     ch
-
-  private def addToken(tokenType: TokenType): Unit =
-    tokens += SymbolToken(tokenType, line)
