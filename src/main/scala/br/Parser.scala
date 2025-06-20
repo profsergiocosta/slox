@@ -1,6 +1,6 @@
-package com.example
+package br.ufma.ecp.slox
 
-import com.example.TokenType.*
+import br.ufma.ecp.slox.TokenType.*
 
 class Parser(tokens: List[Token]):
 
