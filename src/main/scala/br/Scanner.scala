@@ -1,4 +1,4 @@
-package com.example
+package br.ufma.ecp.slox
 
 
 

@@ -1,5 +1,4 @@
-package com.example
-
+package br.ufma.ecp.slox
 
 enum TokenType:
   // Single-character tokens.

@@ -1,4 +1,4 @@
-package com.example
+package br.ufma.ecp.slox
 
 
 
@@ -8,9 +8,23 @@ import java.nio.file.{Files, Paths}
 import scala.jdk.CollectionConverters._
 
 
+case class RuntimeError(token: Token, override val getMessage: String)
+    extends RuntimeException(getMessage)
+
 object Lox {
 
+  private val interpreter = Interpreter()
+
+  def printExpr(expr: Expr): String = expr match
+    case Expr.Literal(Some(value)) => value.toString
+    case Expr.Literal(None)        => "nil"
+    case Expr.Grouping(e)          => s"(group ${printExpr(e)})"
+    case Expr.Unary(op, right)     => s"(${op.toString()} ${printExpr(right)})"
+    case Expr.Binary(left, op, right) =>
+      s"(${op.toString()} ${printExpr(left)} ${printExpr(right)})"
+
   var hadError: Boolean = false
+  var hadRuntimeError: Boolean = false
 
   def main(args: Array[String]): Unit = {
     if (args.length > 1) {
@@ -56,10 +70,18 @@ object Lox {
 
     expressionOpt match
       case Some(expression) =>
-        println(AstPrinter.print(expression))
+        //println(AstPrinter.print(expression))
+        //println(printExpr(expression))
+         interpreter.interpret(expression);
       case None =>
         // Parser retornou erro (None), não faz nada ou exibe erro
         ()
+
+  
+    
+  def runtimeError(error: RuntimeError): Unit =
+    System.err.println(s"${error.getMessage}\n[line ${error.token.line}]")
+    hadRuntimeError = true
 
   def error(line: Int, message: String): Unit = {
     report(line, "", message)
