@@ -8,10 +8,29 @@ class Parser(tokens: List[Token]):
 
   private var current: Int = 0
 
-  def parse(): Option[Expr] =
-    try Some(expression())
-    catch
-      case _: ParseError => None
+  def parse(): List[Stmt] =
+    def loop(acc: List[Stmt]): List[Stmt] =
+      if isAtEnd then acc.reverse
+      else loop(statement() :: acc)
+
+    loop(Nil)
+
+
+  private def statement(): Stmt =
+    if matchToken(TokenType.PRINT) then
+      printStatement()
+    else
+      expressionStatement()
+
+  private def printStatement(): Stmt =
+    val value = expression()
+    consume(TokenType.SEMICOLON, "Expect ';' after value.")
+    Stmt.Print(value)
+
+  private def expressionStatement(): Stmt =
+    val value = expression()
+    consume(TokenType.SEMICOLON, "Expect ';' after expression.")
+    Stmt.Expression(value)
 
   private def expression(): Expr = equality()
 
