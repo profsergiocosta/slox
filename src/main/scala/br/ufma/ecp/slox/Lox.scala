@@ -61,21 +61,15 @@ object Lox {
   def run(source: String): Unit =
     val scanner = new Scanner(source)
     val tokens = scanner.scanTokens()
-
     val parser = new Parser(tokens)
-    val expressionOpt = parser.parse()
 
-    // Para simular o 'hadError', vamos supor que você tenha um objeto Lox com essa flag
-    if Lox.hadError then return
-
-    expressionOpt match
-      case Some(expression) =>
-        //println(AstPrinter.print(expression))
-        //println(printExpr(expression))
-         interpreter.interpret(expression);
-      case None =>
-        // Parser retornou erro (None), não faz nada ou exibe erro
+    parser.parse() match
+      case Some(statements) if !Lox.hadError =>
+        interpreter.interpret(statements)
+      case _ =>
+        // Erro já foi reportado por Lox.error(), nada a fazer aqui
         ()
+
 
   
     

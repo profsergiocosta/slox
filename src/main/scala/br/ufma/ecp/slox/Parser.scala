@@ -8,12 +8,21 @@ class Parser(tokens: List[Token]):
 
   private var current: Int = 0
 
-  def parse(): List[Stmt] =
+  def parse(): Option[List[Stmt]] =
     def loop(acc: List[Stmt]): List[Stmt] =
       if isAtEnd then acc.reverse
-      else loop(statement() :: acc)
+      else
+        try
+          loop(statement() :: acc)
+        catch case _: ParseError =>
+          synchronize()
+          loop(acc) // ignora stmt com erro e tenta seguir
 
-    loop(Nil)
+    try
+      Some(loop(Nil))
+    catch
+      case _: ParseError => None
+
 
 
   private def statement(): Stmt =

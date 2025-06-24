@@ -3,12 +3,20 @@ package br.ufma.ecp.slox
 
 class Interpreter:
 
-  def interpret(expr: Expr): Unit =
+
+  def interpret(statements: List[Stmt]): Unit =
     try
-      val value = evaluate(expr)
-      println(stringify(value))
+      statements.foreach(execute)
     catch
-      case e: RuntimeError => Lox.runtimeError(e)
+      case err: RuntimeError => Lox.runtimeError(err)
+
+  private def execute(stmt: Stmt): Unit =
+    stmt match
+      case Stmt.Expression(expr) => evaluate(expr)
+      case Stmt.Print(expr) =>
+        val value = evaluate(expr)
+        println(stringify(value))
+
 
   private def evaluate(expr: Expr): Any =
     expr match
