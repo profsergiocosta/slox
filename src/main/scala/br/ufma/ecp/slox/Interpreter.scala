@@ -3,6 +3,7 @@ package br.ufma.ecp.slox
 
 class Interpreter:
 
+  private val environment = Environment()
 
   def interpret(statements: List[Stmt]): Unit =
     try
@@ -16,7 +17,9 @@ class Interpreter:
       case Stmt.Print(expr) =>
         val value = evaluate(expr)
         println(stringify(value))
-
+      case Stmt.Var(name, initializer) =>
+        val value = initializer.map(evaluate).getOrElse(null)
+        environment.define(name, value)
 
   private def evaluate(expr: Expr): Any =
     expr match
@@ -32,6 +35,9 @@ class Interpreter:
           case _ => throw RuntimeError(op, "Invalid unary operator.")
       case Expr.Binary(left, op, right) =>
         evaluateBinary(left, op, right)
+      case Expr.Variable(name) =>
+        environment.get(name)
+
 
   private def evaluateBinary(left: Expr, op: Token, right: Expr): Any =
         val l = evaluate(left)

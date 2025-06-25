@@ -12,18 +12,33 @@ class Parser(tokens: List[Token]):
     def loop(acc: List[Stmt]): List[Stmt] =
       if isAtEnd then acc.reverse
       else
-        try
-          loop(statement() :: acc)
-        catch case _: ParseError =>
-          synchronize()
-          loop(acc) // ignora stmt com erro e tenta seguir
+        val decl = declaration()
+        loop(decl match
+          case Some(stmt) => stmt :: acc
+          case None       => acc // erro sintático: ignora esta declaração
+        )
 
+    val result = loop(Nil)
+    if Lox.hadError then None else Some(result)
+
+
+
+  private def declaration(): Option[Stmt] =
     try
-      Some(loop(Nil))
+      if matchToken(TokenType.VAR) then varDeclaration()
+      else Some(statement())
     catch
-      case _: ParseError => None
+      case _: ParseError =>
+        synchronize()
+        None
 
-
+  private def varDeclaration(): Option[Stmt] =
+    val nameToken = consume(TokenType.IDENTIFIER, "Expect variable name.").asInstanceOf[IdentifierToken]
+    val name = nameToken.name
+    val initializer =
+      if matchToken(TokenType.EQUAL) then Some(expression()) else None
+    consume(TokenType.SEMICOLON, "Expect ';' after variable declaration.")
+    Some(Stmt.Var(name, initializer))
 
   private def statement(): Stmt =
     if matchToken(TokenType.PRINT) then
@@ -109,6 +124,10 @@ class Parser(tokens: List[Token]):
                 val expr = expression()
                 consume(TokenType.RIGHT_PAREN, "Expect ')' after expression.")
                 Expr.Grouping(expr)
+            
+            case id: IdentifierToken =>
+              advance()
+              Expr.Variable(id)
 
             case _ =>
                 throw error(peek(), "Expect expression.")

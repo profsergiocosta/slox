@@ -15,14 +15,6 @@ object Lox {
 
   private val interpreter = Interpreter()
 
-  def printExpr(expr: Expr): String = expr match
-    case Expr.Literal(Some(value)) => value.toString
-    case Expr.Literal(None)        => "nil"
-    case Expr.Grouping(e)          => s"(group ${printExpr(e)})"
-    case Expr.Unary(op, right)     => s"(${op.toString()} ${printExpr(right)})"
-    case Expr.Binary(left, op, right) =>
-      s"(${op.toString()} ${printExpr(left)} ${printExpr(right)})"
-
   var hadError: Boolean = false
   var hadRuntimeError: Boolean = false
 
