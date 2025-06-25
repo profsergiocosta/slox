@@ -34,7 +34,7 @@ class Interpreter:
         op.tokenType match
           case TokenType.BANG  => !isTruthy(r)
           case TokenType.MINUS =>
-            checkNumberOperand(op, r)
+            checkNumberOperands(op, r)
             -r.asInstanceOf[Double]
           case _ => throw RuntimeError(op, "Invalid unary operator.")
       case Expr.Binary(left, op, right) =>
@@ -92,10 +92,7 @@ class Interpreter:
         if str.endsWith(".0") then str.dropRight(2) else str
       case _ => value.toString
 
-  private def checkNumberOperand(operator: Token, operand: Any): Unit =
-    if !operand.isInstanceOf[Double] then
-      throw RuntimeError(operator, "Operand must be a number.")
+  private def checkNumberOperands(operator: Token, operands: Any*): Unit =
+    if !operands.forall(_.isInstanceOf[Double]) then
+      throw RuntimeError(operator, "Operand(s) must be number(s).")
 
-  private def checkNumberOperands(operator: Token, left: Any, right: Any): Unit =
-    if !(left.isInstanceOf[Double] && right.isInstanceOf[Double]) then
-      throw RuntimeError(operator, "Operands must be numbers.")
