@@ -23,6 +23,10 @@ class Interpreter:
 
   private def evaluate(expr: Expr): Any =
     expr match
+      case Expr.Assign(name, lrvalue) =>
+        val value = evaluate(lrvalue)
+        environment.assign(name, value)
+        value
       case Expr.Literal(value) => value.getOrElse(null)
       case Expr.Grouping(e)    => evaluate(e)
       case Expr.Unary(op, right) =>

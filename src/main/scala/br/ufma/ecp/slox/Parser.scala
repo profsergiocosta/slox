@@ -56,7 +56,25 @@ class Parser(tokens: List[Token]):
     consume(TokenType.SEMICOLON, "Expect ';' after expression.")
     Stmt.Expression(value)
 
-  private def expression(): Expr = equality()
+  private def expression(): Expr = assignment();
+
+  private def assignment(): Expr =
+    val expr = equality()
+
+    if matchToken(TokenType.EQUAL) then
+      val equals = previous()
+      val value = assignment()
+
+      expr match
+        case Expr.Variable(name) =>
+          Expr.Assign(name, value)
+        case _ =>
+          error(equals, "Invalid assignment target.")
+          // retorna a própria expressão original após erro
+          expr
+    else
+      expr
+
 
   private def equality(): Expr =
     var expr = comparison()
@@ -125,7 +143,7 @@ class Parser(tokens: List[Token]):
                 consume(TokenType.RIGHT_PAREN, "Expect ')' after expression.")
                 Expr.Grouping(expr)
             
-            case id: IdentifierToken =>
+            case id: IdentifierToken  =>
               advance()
               Expr.Variable(id)
 

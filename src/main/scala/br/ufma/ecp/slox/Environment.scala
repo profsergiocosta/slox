@@ -20,3 +20,12 @@ class Environment:
       case _ =>
         throw RuntimeError(token, "Invalid token for variable access.")
 
+  def assign(name: Token, value: Any): Unit =
+        name match
+            case IdentifierToken(idName, _) =>
+                if values.contains(idName) then
+                    values(idName) = value
+                else
+                    throw RuntimeError(name, s"Undefined variable '$idName'.")
+            case _ =>
+                throw RuntimeError(name, "Invalid assignment target.")
