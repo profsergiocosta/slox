@@ -43,8 +43,10 @@ class Interpreter:
         op.tokenType match
           case TokenType.BANG  => !isTruthy(r)
           case TokenType.MINUS =>
-            checkNumberOperands(op, r)
-            -r.asInstanceOf[Double]
+            r match
+              case d: Double => -d
+              case _ => throw RuntimeError(op, "Operand must be a number.")
+          case _ => throw RuntimeError(op, "Invalid unary operator.")
           case _ => throw RuntimeError(op, "Invalid unary operator.")
       case Expr.Binary(left, op, right) =>
         evaluateBinary(left, op, right)
@@ -76,8 +78,8 @@ class Interpreter:
             case TokenType.SLASH          => numOp(_ / _)
             case TokenType.STAR           => numOp(_ * _)
             case TokenType.PLUS           => addOp
-            case TokenType.BANG_EQUAL     => !isEqual(l, r)
-            case TokenType.EQUAL_EQUAL    => isEqual(l, r)
+            case TokenType.BANG_EQUAL     => l != r 
+            case TokenType.EQUAL_EQUAL    => l == r
             case _                        => throw RuntimeError(op, "Invalid binary operator.")
 
 
@@ -87,11 +89,6 @@ class Interpreter:
       case b: Boolean => b
       case _          => true
 
-  private def isEqual(a: Any, b: Any): Boolean =
-    (a, b) match
-      case (null, null) => true
-      case (null, _)    => false
-      case _            => a == b
 
   private def stringify(value: Any): String =
     value match
@@ -100,8 +97,4 @@ class Interpreter:
         val str = d.toString
         if str.endsWith(".0") then str.dropRight(2) else str
       case _ => value.toString
-
-  private def checkNumberOperands(operator: Token, operands: Any*): Unit =
-    if !operands.forall(_.isInstanceOf[Double]) then
-      throw RuntimeError(operator, "Operand(s) must be number(s).")
 
