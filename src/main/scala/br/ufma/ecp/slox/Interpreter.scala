@@ -3,7 +3,7 @@ package br.ufma.ecp.slox
 
 class Interpreter:
 
-  private val environment = Environment()
+  private var environment = Environment()
 
   def interpret(statements: List[Stmt]): Unit =
     try
@@ -13,6 +13,7 @@ class Interpreter:
 
   private def execute(stmt: Stmt): Unit =
     stmt match
+      case Stmt.Block (statements) => executeBlock(statements,Environment(Some(environment)))
       case Stmt.Expression(expr) => evaluate(expr)
       case Stmt.Print(expr) =>
         val value = evaluate(expr)
@@ -20,6 +21,14 @@ class Interpreter:
       case Stmt.Var(name, initializer) =>
         val value = initializer.map(evaluate).getOrElse(null)
         environment.define(name, value)
+
+  def executeBlock(statements: List[Stmt], environment: Environment): Unit =
+    val previous = this.environment
+    try
+      this.environment = environment
+      statements.foreach(execute)
+    finally
+      this.environment = previous
 
   private def evaluate(expr: Expr): Any =
     expr match

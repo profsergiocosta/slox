@@ -43,8 +43,24 @@ class Parser(tokens: List[Token]):
   private def statement(): Stmt =
     if matchToken(TokenType.PRINT) then
       printStatement()
+    else if matchToken(TokenType.LEFT_BRACE) then 
+        Stmt.Block(block());
     else
       expressionStatement()
+
+  private def block () : List[Stmt] =
+    def loop(acc: List[Stmt]): List[Stmt] =
+      if isAtEnd || check(RIGHT_BRACE) then acc.reverse
+      else
+        val decl = declaration()
+        loop(decl match
+          case Some(stmt) => stmt :: acc
+          case None       => acc // erro sintático: ignora esta declaração
+        )
+
+    val result = loop(Nil)
+    consume(RIGHT_BRACE, "Expect '}' after block.");
+    result
 
   private def printStatement(): Stmt =
     val value = expression()
