@@ -26,6 +26,9 @@ class Interpreter:
           execute(thenBranch)
         else
           elseBranch.foreach(execute)
+      case Stmt.While(condition, body) =>
+        while isTruthy(evaluate(condition)) do
+          execute(body)
 
   def executeBlock(statements: List[Stmt], environment: Environment): Unit =
     val previous = this.environment

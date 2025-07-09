@@ -47,6 +47,8 @@ class Parser(tokens: List[Token]):
       Stmt.Block(block())
     else if matchToken(TokenType.IF) then
       ifStatement()
+    else if matchToken(TokenType.WHILE) then
+      whileStatement()
     else
       expressionStatement()
 
@@ -61,6 +63,14 @@ class Parser(tokens: List[Token]):
       else None
 
     Stmt.If(condition, thenBranch, elseBranch)
+
+
+  private def whileStatement(): Stmt =
+    consume(TokenType.LEFT_PAREN, "Expect '(' after 'while'.")
+    val condition = expression()
+    consume(TokenType.RIGHT_PAREN, "Expect ')' after condition.")
+    val body = statement()
+    Stmt.While(condition, body)
 
 
   private def block () : List[Stmt] =

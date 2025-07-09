@@ -20,3 +20,4 @@ object Stmt:
   case class Var(name: String, initializer: Option[Expr]) extends Stmt
   case class Block(statements:List[Stmt]) extends Stmt
   case class If(condition: Expr, thenBranch: Stmt, elseBranch: Option[Stmt]) extends Stmt
+  case class While(condition: Expr, body: Stmt) extends Stmt
