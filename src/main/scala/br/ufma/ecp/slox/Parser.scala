@@ -209,7 +209,36 @@ class Parser(tokens: List[Token]):
       val operator = previous()
       val right = unary()
       Expr.Unary(operator, right)
-    else primary()
+    else call()
+
+  private def call(): Expr =
+    var expr = primary()
+
+    var continue = true
+    while continue do
+      if matchToken(TokenType.LEFT_PAREN) then
+        expr = finishCall(expr)
+      else
+        continue = false
+
+    expr
+
+
+  private def finishCall(callee: Expr): Expr =
+    val arguments = scala.collection.mutable.ListBuffer.empty[Expr]
+
+    if !check(TokenType.RIGHT_PAREN) then {
+      arguments += expression() // Consome o primeiro argumento
+
+      while matchToken(TokenType.COMMA) do
+        if arguments.size >= 255 then
+          error(peek(), "Can't have more than 255 arguments.")
+        arguments += expression()
+    }
+    val paren = consume(TokenType.RIGHT_PAREN, "Expect ')' after arguments.")
+    Expr.Call(callee, paren, arguments.toList)
+
+  
 
   private def primary(): Expr =
         peek() match

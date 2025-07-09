@@ -10,7 +10,7 @@ object Expr:
   case class Literal(value: Option[Any]) extends Expr
   case class Unary(operator: Token, right: Expr) extends Expr
   case class Variable(name: Token) extends Expr
-
+  case class Call(callee: Expr, paren: Token, arguments: List[Expr]) extends Expr
 
 sealed trait Stmt
 

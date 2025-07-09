@@ -3,7 +3,19 @@ package br.ufma.ecp.slox
 
 class Interpreter:
 
-  private var environment = Environment()
+  val globals = Environment()
+  private var environment: Environment = globals
+
+
+   // Registra função nativa no ambiente global:
+  globals.define("clock", new LoxCallable:
+    override def arity: Int = 0
+
+    override def call(interpreter: Interpreter, arguments: List[Any]): Any =
+      System.currentTimeMillis().toDouble / 1000.0
+
+    override def toString: String = "<native fn>"
+  )
 
   def interpret(statements: List[Stmt]): Unit =
     try
@@ -65,6 +77,18 @@ class Interpreter:
       
       case Expr.Variable(name) =>
         environment.get(name)
+
+      case Expr.Call(calleeExpr, paren, arguments) =>
+        val callee = evaluate(calleeExpr)
+        val args = arguments.map(evaluate)
+
+        callee match
+          case fn: LoxCallable =>
+            if args.size != fn.arity then
+              throw RuntimeError(paren, s"Expected ${fn.arity} arguments but got ${args.size}.")
+            fn.call(this, args)
+          case _ =>
+            throw RuntimeError(paren, "Can only call functions and classes.")
 
 
   private def evaluateLogical(left: Expr, operator: Token, right: Expr): Any =
