@@ -41,16 +41,12 @@ class Parser(tokens: List[Token]):
     Some(Stmt.Var(name, initializer))
 
   private def statement(): Stmt =
-    if matchToken(TokenType.PRINT) then
-      printStatement()
-    else if matchToken(TokenType.LEFT_BRACE) then
-      Stmt.Block(block())
-    else if matchToken(TokenType.IF) then
-      ifStatement()
-    else if matchToken(TokenType.WHILE) then
-      whileStatement()
-    else
-      expressionStatement()
+    if matchToken(TokenType.PRINT) then printStatement()
+    else if matchToken(TokenType.LEFT_BRACE) then Stmt.Block(block())
+    else if matchToken(TokenType.IF) then ifStatement()
+    else if matchToken(TokenType.WHILE) then whileStatement()
+    else if matchToken(TokenType.FOR) then forStatement()
+    else expressionStatement()
 
   private def ifStatement(): Stmt =
     consume(TokenType.LEFT_PAREN, "Expect '(' after 'if'.")
@@ -71,6 +67,45 @@ class Parser(tokens: List[Token]):
     consume(TokenType.RIGHT_PAREN, "Expect ')' after condition.")
     val body = statement()
     Stmt.While(condition, body)
+
+  private def forStatement(): Stmt =
+    consume(TokenType.LEFT_PAREN, "Expect '(' after 'for'.")
+
+    val initializer: Option[Stmt] =
+      if matchToken(TokenType.SEMICOLON) then
+        None
+      else if matchToken(TokenType.VAR) then
+        varDeclaration()
+      else
+        Some(expressionStatement())
+
+    val condition: Expr =
+      if !check(TokenType.SEMICOLON) then
+        expression()
+      else
+        Expr.Literal(Some(true))
+
+    consume(TokenType.SEMICOLON, "Expect ';' after loop condition.")
+
+    val increment: Option[Expr] =
+      if !check(TokenType.RIGHT_PAREN) then
+        Some(expression())
+      else
+        None
+
+    consume(TokenType.RIGHT_PAREN, "Expect ')' after for clauses.")
+
+    var body = statement()
+
+    increment.foreach { incr =>
+      body = Stmt.Block(List(body, Stmt.Expression(incr)))
+    }
+
+    body = Stmt.While(condition, body)
+
+    initializer match
+      case Some(init) => Stmt.Block(List(init, body))
+      case None       => body
 
 
   private def block () : List[Stmt] =
