@@ -1,0 +1,6 @@
+var c = true;
+if (c && false) {
+    print "ok";
+} else {
+    print "falso";
+}

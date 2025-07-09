@@ -21,6 +21,11 @@ class Interpreter:
       case Stmt.Var(name, initializer) =>
         val value = initializer.map(evaluate).getOrElse(null)
         environment.define(name, value)
+      case Stmt.If(condition, thenBranch, elseBranch) =>
+        if isTruthy(evaluate(condition)) then
+          execute(thenBranch)
+        else
+          elseBranch.foreach(execute)
 
   def executeBlock(statements: List[Stmt], environment: Environment): Unit =
     val previous = this.environment
@@ -47,7 +52,7 @@ class Interpreter:
               case d: Double => -d
               case _ => throw RuntimeError(op, "Operand must be a number.")
           case _ => throw RuntimeError(op, "Invalid unary operator.")
-          case _ => throw RuntimeError(op, "Invalid unary operator.")
+          
       case Expr.Binary(left, op, right) =>
         evaluateBinary(left, op, right)
       case Expr.Variable(name) =>
