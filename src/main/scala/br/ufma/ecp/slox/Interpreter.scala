@@ -54,10 +54,25 @@ class Interpreter:
           case _ => throw RuntimeError(op, "Invalid unary operator.")
           
       case Expr.Binary(left, op, right) =>
-        evaluateBinary(left, op, right)
+        if op.tokenType == TokenType.OR || op.tokenType == TokenType.AND then
+          evaluateLogical(left, op, right)
+        else
+          evaluateBinary(left, op, right)
+
+      
       case Expr.Variable(name) =>
         environment.get(name)
 
+
+  private def evaluateLogical(left: Expr, operator: Token, right: Expr): Any =
+    val leftVal = evaluate(left)
+    operator.tokenType match
+      case TokenType.OR =>
+        if isTruthy(leftVal) then leftVal else evaluate(right)
+      case TokenType.AND =>
+        if !isTruthy(leftVal) then leftVal else evaluate(right)
+      case _ =>
+        throw RuntimeError(operator, "Invalid logical operator.")
 
   private def evaluateBinary(left: Expr, op: Token, right: Expr): Any =
         val l = evaluate(left)

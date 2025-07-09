@@ -90,7 +90,7 @@ class Parser(tokens: List[Token]):
   private def expression(): Expr = assignment();
 
   private def assignment(): Expr =
-    val expr = equality()
+    val expr = or()
 
     if matchToken(TokenType.EQUAL) then
       val equals = previous()
@@ -107,6 +107,26 @@ class Parser(tokens: List[Token]):
       expr
 
 
+  private def or(): Expr =
+    var expr = and()
+
+    while matchToken(TokenType.OR) do
+      val operator = previous()
+      val right = and()
+      expr = Expr.Binary(expr, operator, right)
+
+    expr
+
+  private def and(): Expr =
+    var expr = equality()
+
+    while matchToken(TokenType.AND) do
+      val operator = previous()
+      val right = equality()
+      expr = Expr.Binary(expr, operator, right)
+
+    expr
+    
   private def equality(): Expr =
     var expr = comparison()
     while matchToken(BANG_EQUAL, EQUAL_EQUAL) do
