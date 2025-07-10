@@ -42,6 +42,18 @@ class Interpreter:
         while isTruthy(evaluate(condition)) do
           execute(body)
 
+      case Stmt.Function(nameToken, params, body) =>
+        val function = LoxFunction(Stmt.Function(nameToken, params, body), environment)
+        nameToken match
+          case IdentifierToken(name, _) => environment.define(name, function)
+          case _ => throw RuntimeError(nameToken, "Invalid function name.")
+
+      case Stmt.Return(_, valueOpt) =>
+        val value = valueOpt match
+          case Some(expr) => evaluate(expr)
+          case None       => null
+        throw Return(value)
+
   def executeBlock(statements: List[Stmt], environment: Environment): Unit =
     val previous = this.environment
     try

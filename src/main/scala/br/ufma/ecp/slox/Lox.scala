@@ -8,8 +8,7 @@ import java.nio.file.{Files, Paths}
 import scala.jdk.CollectionConverters._
 
 
-case class RuntimeError(token: Token, override val getMessage: String)
-    extends RuntimeException(getMessage)
+
 
 object Lox {
 

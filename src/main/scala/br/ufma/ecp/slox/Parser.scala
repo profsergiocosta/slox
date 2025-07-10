@@ -25,12 +25,47 @@ class Parser(tokens: List[Token]):
 
   private def declaration(): Option[Stmt] =
     try
-      if matchToken(TokenType.VAR) then varDeclaration()
-      else Some(statement())
+      if matchToken(TokenType.VAR) then
+        varDeclaration()
+      else if matchToken(TokenType.FUN) then
+        Some(function("function"))
+      else
+        Some(statement())
     catch
       case _: ParseError =>
         synchronize()
         None
+
+  private def function(kind: String): Stmt =
+    val name = consume(TokenType.IDENTIFIER, s"Expect ${kind} name.")
+    consume(TokenType.LEFT_PAREN, s"Expect '(' after ${kind} name.")
+
+    val parameters = scala.collection.mutable.ListBuffer.empty[Token]
+
+    if !check(TokenType.RIGHT_PAREN) then
+      parameters += consume(TokenType.IDENTIFIER, "Expect parameter name.")
+      while matchToken(TokenType.COMMA) do
+        if parameters.size >= 255 then
+          error(peek(), "Can't have more than 255 parameters.")
+        parameters += consume(TokenType.IDENTIFIER, "Expect parameter name.")
+
+    consume(TokenType.RIGHT_PAREN, "Expect ')' after parameters.")
+
+    consume(TokenType.LEFT_BRACE, s"Expect '{' before ${kind} body.")
+    val body = block() // block() já retorna List[Stmt]
+
+    Stmt.Function(name, parameters.toList, body)
+
+
+  private def returnStatement(): Stmt =
+    val keyword = previous()
+    val value =
+      if !check(TokenType.SEMICOLON) then Some(expression())
+      else None
+
+    consume(TokenType.SEMICOLON, "Expect ';' after return value.")
+    Stmt.Return(keyword, value)
+
 
   private def varDeclaration(): Option[Stmt] =
     val nameToken = consume(TokenType.IDENTIFIER, "Expect variable name.").asInstanceOf[IdentifierToken]
@@ -46,6 +81,7 @@ class Parser(tokens: List[Token]):
     else if matchToken(TokenType.IF) then ifStatement()
     else if matchToken(TokenType.WHILE) then whileStatement()
     else if matchToken(TokenType.FOR) then forStatement()
+    else if matchToken(TokenType.RETURN) then returnStatement()
     else expressionStatement()
 
   private def ifStatement(): Stmt =

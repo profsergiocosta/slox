@@ -21,3 +21,5 @@ object Stmt:
   case class Block(statements:List[Stmt]) extends Stmt
   case class If(condition: Expr, thenBranch: Stmt, elseBranch: Option[Stmt]) extends Stmt
   case class While(condition: Expr, body: Stmt) extends Stmt
+  case class Function(name: Token, params: List[Token], body: List[Stmt]) extends Stmt
+  case class Return(keyword: Token, value: Option[Expr]) extends Stmt
