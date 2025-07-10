@@ -1,0 +1,35 @@
+var c = true;
+if (c or false) {
+    print "ok";
+} else {
+    print "falso";
+}
+
+fun imprime () {
+
+    print "ola mundo";
+
+    return 10;
+}
+
+var i = 0;
+
+while (i < 10) {
+    print (i);
+    i = i + 1;
+}
+
+var a = 0;
+var temp;
+
+for (var b = 1; a < 100; b = temp + b) {
+  print a;
+  temp = a;
+  a = b;
+}
+
+
+print (clock());
+
+a = imprime();
+print a;

@@ -25,12 +25,47 @@ class Parser(tokens: List[Token]):
 
   private def declaration(): Option[Stmt] =
     try
-      if matchToken(TokenType.VAR) then varDeclaration()
-      else Some(statement())
+      if matchToken(TokenType.VAR) then
+        varDeclaration()
+      else if matchToken(TokenType.FUN) then
+        Some(function("function"))
+      else
+        Some(statement())
     catch
       case _: ParseError =>
         synchronize()
         None
+
+  private def function(kind: String): Stmt =
+    val name = consume(TokenType.IDENTIFIER, s"Expect ${kind} name.")
+    consume(TokenType.LEFT_PAREN, s"Expect '(' after ${kind} name.")
+
+    val parameters = scala.collection.mutable.ListBuffer.empty[Token]
+
+    if !check(TokenType.RIGHT_PAREN) then
+      parameters += consume(TokenType.IDENTIFIER, "Expect parameter name.")
+      while matchToken(TokenType.COMMA) do
+        if parameters.size >= 255 then
+          error(peek(), "Can't have more than 255 parameters.")
+        parameters += consume(TokenType.IDENTIFIER, "Expect parameter name.")
+
+    consume(TokenType.RIGHT_PAREN, "Expect ')' after parameters.")
+
+    consume(TokenType.LEFT_BRACE, s"Expect '{' before ${kind} body.")
+    val body = block() // block() já retorna List[Stmt]
+
+    Stmt.Function(name, parameters.toList, body)
+
+
+  private def returnStatement(): Stmt =
+    val keyword = previous()
+    val value =
+      if !check(TokenType.SEMICOLON) then Some(expression())
+      else None
+
+    consume(TokenType.SEMICOLON, "Expect ';' after return value.")
+    Stmt.Return(keyword, value)
+
 
   private def varDeclaration(): Option[Stmt] =
     val nameToken = consume(TokenType.IDENTIFIER, "Expect variable name.").asInstanceOf[IdentifierToken]
@@ -41,12 +76,73 @@ class Parser(tokens: List[Token]):
     Some(Stmt.Var(name, initializer))
 
   private def statement(): Stmt =
-    if matchToken(TokenType.PRINT) then
-      printStatement()
-    else if matchToken(TokenType.LEFT_BRACE) then 
-        Stmt.Block(block());
-    else
-      expressionStatement()
+    if matchToken(TokenType.PRINT) then printStatement()
+    else if matchToken(TokenType.LEFT_BRACE) then Stmt.Block(block())
+    else if matchToken(TokenType.IF) then ifStatement()
+    else if matchToken(TokenType.WHILE) then whileStatement()
+    else if matchToken(TokenType.FOR) then forStatement()
+    else if matchToken(TokenType.RETURN) then returnStatement()
+    else expressionStatement()
+
+  private def ifStatement(): Stmt =
+    consume(TokenType.LEFT_PAREN, "Expect '(' after 'if'.")
+    val condition = expression()
+    consume(TokenType.RIGHT_PAREN, "Expect ')' after if condition.")
+    
+    val thenBranch = statement()
+    val elseBranch =
+      if matchToken(TokenType.ELSE) then Some(statement())
+      else None
+
+    Stmt.If(condition, thenBranch, elseBranch)
+
+
+  private def whileStatement(): Stmt =
+    consume(TokenType.LEFT_PAREN, "Expect '(' after 'while'.")
+    val condition = expression()
+    consume(TokenType.RIGHT_PAREN, "Expect ')' after condition.")
+    val body = statement()
+    Stmt.While(condition, body)
+
+  private def forStatement(): Stmt =
+    consume(TokenType.LEFT_PAREN, "Expect '(' after 'for'.")
+
+    val initializer: Option[Stmt] =
+      if matchToken(TokenType.SEMICOLON) then
+        None
+      else if matchToken(TokenType.VAR) then
+        varDeclaration()
+      else
+        Some(expressionStatement())
+
+    val condition: Expr =
+      if !check(TokenType.SEMICOLON) then
+        expression()
+      else
+        Expr.Literal(Some(true))
+
+    consume(TokenType.SEMICOLON, "Expect ';' after loop condition.")
+
+    val increment: Option[Expr] =
+      if !check(TokenType.RIGHT_PAREN) then
+        Some(expression())
+      else
+        None
+
+    consume(TokenType.RIGHT_PAREN, "Expect ')' after for clauses.")
+
+    var body = statement()
+
+    increment.foreach { incr =>
+      body = Stmt.Block(List(body, Stmt.Expression(incr)))
+    }
+
+    body = Stmt.While(condition, body)
+
+    initializer match
+      case Some(init) => Stmt.Block(List(init, body))
+      case None       => body
+
 
   private def block () : List[Stmt] =
     def loop(acc: List[Stmt]): List[Stmt] =
@@ -75,7 +171,7 @@ class Parser(tokens: List[Token]):
   private def expression(): Expr = assignment();
 
   private def assignment(): Expr =
-    val expr = equality()
+    val expr = or()
 
     if matchToken(TokenType.EQUAL) then
       val equals = previous()
@@ -92,6 +188,26 @@ class Parser(tokens: List[Token]):
       expr
 
 
+  private def or(): Expr =
+    var expr = and()
+
+    while matchToken(TokenType.OR) do
+      val operator = previous()
+      val right = and()
+      expr = Expr.Binary(expr, operator, right)
+
+    expr
+
+  private def and(): Expr =
+    var expr = equality()
+
+    while matchToken(TokenType.AND) do
+      val operator = previous()
+      val right = equality()
+      expr = Expr.Binary(expr, operator, right)
+
+    expr
+    
   private def equality(): Expr =
     var expr = comparison()
     while matchToken(BANG_EQUAL, EQUAL_EQUAL) do
@@ -129,7 +245,36 @@ class Parser(tokens: List[Token]):
       val operator = previous()
       val right = unary()
       Expr.Unary(operator, right)
-    else primary()
+    else call()
+
+  private def call(): Expr =
+    var expr = primary()
+
+    var continue = true
+    while continue do
+      if matchToken(TokenType.LEFT_PAREN) then
+        expr = finishCall(expr)
+      else
+        continue = false
+
+    expr
+
+
+  private def finishCall(callee: Expr): Expr =
+    val arguments = scala.collection.mutable.ListBuffer.empty[Expr]
+
+    if !check(TokenType.RIGHT_PAREN) then {
+      arguments += expression() // Consome o primeiro argumento
+
+      while matchToken(TokenType.COMMA) do
+        if arguments.size >= 255 then
+          error(peek(), "Can't have more than 255 arguments.")
+        arguments += expression()
+    }
+    val paren = consume(TokenType.RIGHT_PAREN, "Expect ')' after arguments.")
+    Expr.Call(callee, paren, arguments.toList)
+
+  
 
   private def primary(): Expr =
         peek() match
